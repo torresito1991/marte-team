@@ -29,9 +29,8 @@
     (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
   // Abierta desde el ícono de inicio (app web en iPhone, o ?inicio=1 del manifest en Android): va directo a la app.
   // Abierta desde un link normal: se queda en esta página para poder agregarla a inicio con el logo.
-  if (q.get('inicio') === '1' || standalone) {
-    location.replace(APP);
-  } else if (location.search) {
+  var WHY = q.get('inicio') === '1' ? 'icono-android' : (window.navigator.standalone === true ? 'icono-iphone' : (standalone ? 'modo-app' : ''));
+  if (!WHY && location.search) {
     // Links viejos (por ejemplo ?go=1) ya no abren la app: se limpia la dirección y se queda acá.
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
   }
@@ -81,10 +80,23 @@
   .steps b { color: var(--text); }
   .hint { color: var(--muted); font-size: 13px; margin-top: 14px; }
   .dot { color: var(--accent); }
+  #going {
+    position: fixed; inset: 0; background: var(--bg); z-index: 9; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px; padding: 16px; text-align: center;
+  }
+  #going p { font-size: 18px; margin: 0 0 10px; }
+  #going button { font: inherit; color: var(--text); background: transparent; border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+  #going small, .ver { color: var(--muted); font-size: 11px; opacity: .7; }
   [hidden] { display: none !important; }
 </style>
 </head>
 <body>
+<div id="going" hidden>
+  <div class="logo"><img src="icon-192.png" alt=""></div>
+  <p>Abriendo la app…</p>
+  <button id="stay" type="button">Quedarme en esta página</button>
+  <small id="why"></small>
+</div>
 <main>
   <div class="logo"><img src="icon-192.png" alt="Logo Marte Team"></div>
   <h1>Marte Team</h1>
@@ -120,9 +132,20 @@
   <a class="open secondary" id="open" href="#">Abrir sin guardarla</a>
 
   <p class="hint">Después abrila siempre desde el ícono de Marte Team. La primera vez Google te pide entrar con tu cuenta y dar permiso. Tus cargas se guardan en tu propio Drive.</p>
+  <p class="ver">v4</p>
 </main>
 <script>
   document.getElementById('open').href = APP;
+  if (WHY) {
+    var going = document.getElementById('going');
+    going.hidden = false;
+    document.getElementById('why').textContent = WHY;
+    var t = setTimeout(function () { location.replace(APP); }, 900);
+    document.getElementById('stay').onclick = function () {
+      clearTimeout(t); going.hidden = true;
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    };
+  }
   var ua = navigator.userAgent || '';
   var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var isAndroid = /Android/.test(ua);

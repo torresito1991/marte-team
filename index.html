@@ -27,9 +27,9 @@
   var q = new URLSearchParams(location.search);
   var standalone = (window.navigator.standalone === true) ||
     (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-  // Abierta desde el ícono de inicio (app web en iPhone, o ?inicio=1 del manifest en Android): va directo a la app.
-  // Abierta desde un link normal: se queda en esta página para poder agregarla a inicio con el logo.
-  var WHY = q.get('inicio') === '1' ? 'icono-android' : (window.navigator.standalone === true ? 'icono-iphone' : (standalone ? 'modo-app' : ''));
+  // Solo el ícono de inicio abre la app directo (start_url del manifest = ?inicio=1).
+  // Abierta desde cualquier link, la página se queda acá para poder agregarla a inicio con el logo.
+  var WHY = q.get('inicio') === '1' ? 'icono' : '';
   if (!WHY && location.search) {
     // Links viejos (por ejemplo ?go=1) ya no abren la app: se limpia la dirección y se queda acá.
     try { history.replaceState(null, '', location.pathname); } catch (e) {}
@@ -132,10 +132,15 @@
   <a class="open secondary" id="open" href="#">Abrir sin guardarla</a>
 
   <p class="hint">Después abrila siempre desde el ícono de Marte Team. La primera vez Google te pide entrar con tu cuenta y dar permiso. Tus cargas se guardan en tu propio Drive.</p>
-  <p class="ver">v4</p>
+  <p class="ver" id="ver">v5</p>
 </main>
 <script>
   document.getElementById('open').href = APP;
+  if (standalone && !WHY) {
+    // Abierta como app pero sin el parámetro: un solo botón grande para entrar.
+    var o = document.getElementById('open'); o.classList.remove('secondary'); o.textContent = 'Abrir la app';
+    document.querySelectorAll('.steps').forEach(function (x) { x.remove(); });
+  }
   if (WHY) {
     var going = document.getElementById('going');
     going.hidden = false;
@@ -149,7 +154,9 @@
   var ua = navigator.userAgent || '';
   var isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var isAndroid = /Android/.test(ua);
-  document.getElementById(isIOS ? 'ios' : isAndroid ? 'android' : 'other').hidden = false;
+  var box = document.getElementById(isIOS ? 'ios' : isAndroid ? 'android' : 'other');
+  if (box) box.hidden = false;
+  document.getElementById('ver').textContent = 'v5' + (standalone ? ' · app' : '') + (navigator.standalone === true ? ' · ios' : '');
 </script>
 </body>
 </html>

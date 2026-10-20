@@ -66,8 +66,8 @@
     background: var(--btn); color: var(--btn-text); font: 600 16px/1 inherit; text-decoration: none;
   }
   .open.secondary {
-    margin-top: 16px; background: transparent; color: var(--text);
-    box-shadow: 0 0 0 1px var(--line) inset; font-weight: 500;
+    margin-top: 6px; padding: 8px; background: transparent; color: var(--muted);
+    font-size: 13px; font-weight: 400; text-decoration: underline; text-underline-offset: 3px;
   }
   .steps.first { margin-top: 0; }
   .steps {
@@ -129,16 +129,15 @@
     </ol>
   </section>
 
-  <a class="open secondary" id="open" href="#">Abrir sin guardarla</a>
-
   <p class="hint">Después abrila siempre desde el ícono de Marte Team. La primera vez Google te pide entrar con tu cuenta y dar permiso. Tus cargas se guardan en tu propio Drive.</p>
-  <p class="ver" id="ver">v5</p>
+  <a class="open secondary" id="open" href="#">o abrila sin guardarla en inicio</a>
+  <p class="ver" id="ver">v6</p>
 </main>
 <script>
   document.getElementById('open').href = APP;
   if (standalone && !WHY) {
     // Abierta como app pero sin el parámetro: un solo botón grande para entrar.
-    var o = document.getElementById('open'); o.classList.remove('secondary'); o.textContent = 'Abrir la app';
+    var o = document.getElementById('open'); o.classList.remove('secondary'); o.textContent = 'Abrir la app'; o.parentNode.insertBefore(o, document.querySelector('.hint'));
     document.querySelectorAll('.steps').forEach(function (x) { x.remove(); });
   }
   if (WHY) {
@@ -156,7 +155,7 @@
   var isAndroid = /Android/.test(ua);
   var box = document.getElementById(isIOS ? 'ios' : isAndroid ? 'android' : 'other');
   if (box) box.hidden = false;
-  document.getElementById('ver').textContent = 'v5' + (standalone ? ' · app' : '') + (navigator.standalone === true ? ' · ios' : '');
+  document.getElementById('ver').textContent = 'v6' + (standalone ? ' · app' : '') + (navigator.standalone === true ? ' · ios' : '');
 </script>
 </body>
 </html>

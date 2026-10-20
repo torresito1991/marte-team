@@ -20,7 +20,9 @@
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon-v2.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
 <link rel="icon" type="image/png" sizes="48x48" href="favicon.png?v=2">
-<link rel="manifest" href="manifest.webmanifest?v=4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest?v=5">
 <script>
   // Link de la app (sitio propio, carpeta app/ de este mismo repo).
   var APP = './app/';
@@ -132,14 +134,13 @@
 
   <p class="hint">Después abrila siempre desde el ícono de Marte Team. La primera vez Google te pide entrar con tu cuenta y dar permiso. Tus cargas se guardan en tu propio Drive.</p>
   <a class="open secondary" id="open" href="./app/">o abrila sin guardarla en inicio</a>
-  <p class="ver" id="ver">v7</p>
+  <p class="ver" id="ver">v8</p>
 </main>
 <script>
   document.getElementById('open').href = APP;
   if (standalone && !WHY) {
-    // Abierta como app pero sin el parámetro: un solo botón grande para entrar.
-    var o = document.getElementById('open'); o.classList.remove('secondary'); o.textContent = 'Abrir la app'; o.parentNode.insertBefore(o, document.querySelector('.hint'));
-    document.querySelectorAll('.steps').forEach(function (x) { x.remove(); });
+    // Abierta desde el ícono de inicio (app web): la app vive en ./app/ en este mismo sitio, así que va directo.
+    location.replace(APP);
   }
   if (WHY) {
     var going = document.getElementById('going');
@@ -156,7 +157,7 @@
   var isAndroid = /Android/.test(ua);
   var box = document.getElementById(isIOS ? 'ios' : isAndroid ? 'android' : 'other');
   if (box) box.hidden = false;
-  document.getElementById('ver').textContent = 'v7' + (standalone ? ' · app' : '') + (navigator.standalone === true ? ' · ios' : '');
+  document.getElementById('ver').textContent = 'v8' + (standalone ? ' · app' : '') + (navigator.standalone === true ? ' · ios' : '');
 </script>
 </body>
 </html>

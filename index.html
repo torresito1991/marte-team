@@ -27,12 +27,10 @@
   var q = new URLSearchParams(location.search);
   var standalone = (window.navigator.standalone === true) ||
     (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-  // Desde el ícono de inicio (?go=1) se abre la app directo.
+  // Abierta desde el ícono de inicio (app web en iPhone, o ?go=1 del manifest en Android): va directo a la app.
+  // Abierta desde un link normal: se queda en esta página para poder agregarla a inicio con el logo.
   if (q.get('go') === '1' || standalone) {
     location.replace(APP);
-  } else {
-    // Así el ícono que se guarde en el iPhone ya apunta a la apertura directa.
-    try { history.replaceState(null, '', location.pathname + '?go=1'); } catch (e) {}
   }
 </script>
 <style>
@@ -65,6 +63,11 @@
     display: block; width: 100%; padding: 14px 18px; border-radius: 12px; border: 0;
     background: var(--btn); color: var(--btn-text); font: 600 16px/1 inherit; text-decoration: none;
   }
+  .open.secondary {
+    margin-top: 16px; background: transparent; color: var(--text);
+    box-shadow: 0 0 0 1px var(--line) inset; font-weight: 500;
+  }
+  .steps.first { margin-top: 0; }
   .steps {
     margin-top: 22px; background: var(--card); border: 1px solid var(--line); border-radius: 14px;
     padding: 16px 16px 6px; text-align: left;
@@ -84,27 +87,25 @@
   <h1>Marte Team</h1>
   <p class="sub">El plan del coach y tus cargas, semana a semana<span class="dot">.</span></p>
 
-  <a class="open" id="open" href="#">Abrir la app</a>
-
-  <section class="steps" id="ios" hidden>
+  <section class="steps first" id="ios" hidden>
     <h2>Guardala como app en el iPhone</h2>
     <ol>
-      <li>Abrí este link en <b>Safari</b>.</li>
+      <li>Quedate en <b>esta página</b> (en Safari), sin abrir la app.</li>
       <li>Tocá <b>Compartir</b> (el cuadrado con la flecha hacia arriba).</li>
-      <li>Elegí <b>Agregar a inicio</b> y después <b>Agregar</b>.</li>
+      <li>Elegí <b>Agregar a inicio</b>, dejá activado <b>Abrir como app web</b> y tocá <b>Agregar</b>.</li>
     </ol>
   </section>
 
-  <section class="steps" id="android" hidden>
+  <section class="steps first" id="android" hidden>
     <h2>Guardala como app en Android</h2>
     <ol>
-      <li>Abrí este link en <b>Chrome</b>.</li>
+      <li>Quedate en <b>esta página</b> (en Chrome), sin abrir la app.</li>
       <li>Tocá el menú <b>⋮</b> arriba a la derecha.</li>
       <li>Elegí <b>Agregar a la pantalla principal</b> y confirmá.</li>
     </ol>
   </section>
 
-  <section class="steps" id="other" hidden>
+  <section class="steps first" id="other" hidden>
     <h2>Para guardarla en el celular</h2>
     <ol>
       <li>Abrí este link desde el celular.</li>
@@ -113,7 +114,9 @@
     </ol>
   </section>
 
-  <p class="hint">La primera vez Google te pide entrar con tu cuenta y dar permiso. Tus cargas se guardan en tu propio Drive.</p>
+  <a class="open secondary" id="open" href="#">Abrir sin guardarla</a>
+
+  <p class="hint">Después abrila siempre desde el ícono de Marte Team. La primera vez Google te pide entrar con tu cuenta y dar permiso. Tus cargas se guardan en tu propio Drive.</p>
 </main>
 <script>
   document.getElementById('open').href = APP;

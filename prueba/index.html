@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Marte Team prueba</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<meta name="apple-mobile-web-app-title" content="Marte prueba">
+<meta name="robots" content="noindex">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon-v2.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png?v=2">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  :root { --bg:#0f1115; --card:#171a21; --line:#2c313b; --text:#f2f3f5; --muted:#9aa0ab; --ok:#4cc38a; --bad:#ff7a6b; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: max(20px, env(safe-area-inset-top)) 16px 24px; }
+  main { max-width: 420px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
+  button { width: 100%; min-height: 48px; border: 0; border-radius: 12px; background: var(--text); color: var(--bg); font: 600 16px/1 inherit; }
+  ul { list-style: none; padding: 0; margin: 16px 0 0; }
+  li { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; font-size: 14px; }
+  li b { display: block; font-size: 12px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .04em; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); }
+  pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Prueba de pantalla completa</h1>
+  <p class="sub">Entra con Google desde tu propio sitio y lee la planilla del plan, sin pasar por script.google.com.</p>
+  <button id="login" hidden>Entrar con Google</button>
+  <ul id="out"></ul>
+</main>
+<script>
+  // Credencial OAuth (tipo "Aplicación web") del proyecto de Google Cloud. Origen autorizado: https://torresito1991.github.io
+  var CLIENT_ID = 'PEGAR_CLIENT_ID.apps.googleusercontent.com';
+  var PLAN_ID = '1Q3F04qq2-Uei2US33gfh6BDmpd7j95gqN-1gtiFgRfE';
+  var SCOPES = 'openid email https://www.googleapis.com/auth/spreadsheets';
+  var KEY = 'mt-prueba-token';
+  var out = document.getElementById('out');
+  function row(label, value, cls) {
+    var li = document.createElement('li');
+    var b = document.createElement('b'); b.textContent = label;
+    var s = document.createElement('span'); s.textContent = value; if (cls) s.className = cls;
+    li.appendChild(b); li.appendChild(s); out.appendChild(li);
+  }
+  var standalone = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  row('Modo', standalone ? 'Pantalla completa (app web)' : 'Navegador', standalone ? 'ok' : '');
+
+  // 1) Vuelta de Google: el token viene en el #fragmento.
+  var h = new URLSearchParams(location.hash.slice(1));
+  if (h.get('access_token')) {
+    try { localStorage.setItem(KEY, JSON.stringify({ t: h.get('access_token'), exp: Date.now() + (Number(h.get('expires_in')) || 3600) * 1000 })); } catch (e) {}
+    history.replaceState(null, '', location.pathname);
+  } else if (h.get('error')) {
+    row('Google respondió', h.get('error'), 'bad');
+    history.replaceState(null, '', location.pathname);
+  }
+  function token() {
+    try { var v = JSON.parse(localStorage.getItem(KEY) || 'null'); return v && v.exp > Date.now() + 60000 ? v.t : null; } catch (e) { return null; }
+  }
+  function login(silent) {
+    var p = new URLSearchParams({
+      client_id: CLIENT_ID, redirect_uri: location.origin + location.pathname, response_type: 'token',
+      scope: SCOPES, include_granted_scopes: 'true', state: 'prueba'
+    });
+    if (silent) p.set('prompt', 'none');
+    location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + p.toString();
+  }
+  document.getElementById('login').onclick = function () { login(false); };
+
+  async function api(url, t) {
+    var r = await fetch(url, { headers: { Authorization: 'Bearer ' + t } });
+    if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 200));
+    return r.json();
+  }
+  (async function () {
+    if (/PEGAR_CLIENT_ID/.test(CLIENT_ID)) { row('Falta', 'Todavía no hay credencial de Google cargada.', 'bad'); return; }
+    var t = token();
+    if (!t) { document.getElementById('login').hidden = false; return; }
+    var t0 = performance.now();
+    try {
+      var me = await api('https://openidconnect.googleapis.com/v1/userinfo', t);
+      row('Cuenta', me.email, 'ok');
+      var meta = await api('https://sheets.googleapis.com/v4/spreadsheets/' + PLAN_ID +
+        '?fields=properties.title,sheets(properties(title,hidden),merges)', t);
+      row('Planilla', meta.properties.title, 'ok');
+      row('Hojas', meta.sheets.map(function (s) { return s.properties.title + (s.properties.hidden ? ' (oculta)' : ''); }).join(', '));
+      var first = meta.sheets.find(function (s) { return /PLANIF/i.test(s.properties.title); }) || meta.sheets[0];
+      var vals = await api('https://sheets.googleapis.com/v4/spreadsheets/' + PLAN_ID + '/values/' +
+        encodeURIComponent("'" + first.properties.title + "'!A1:C12"), t);
+      row('Primeras filas', (vals.values || []).map(function (r) { return r.filter(Boolean).join(' · '); }).filter(Boolean).slice(0, 6).join('\n'));
+      row('Tiempo total', Math.round(performance.now() - t0) + ' ms', 'ok');
+    } catch (e) {
+      row('Error', String(e.message || e), 'bad');
+      if (/^401/.test(e.message)) { try { localStorage.removeItem(KEY); } catch (_) {} document.getElementById('login').hidden = false; }
+    }
+  })();
+</script>
+</body>
+</html>
